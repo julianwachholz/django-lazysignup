@@ -1,6 +1,7 @@
 import re
 import uuid
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.db import models
 try:
     from django.utils.timezone import now
@@ -28,15 +29,13 @@ for user_agent in getattr(settings, 'LAZYSIGNUP_USER_AGENT_BLACKLIST',
 
 class LazyUserManager(models.Manager):
 
-    username_field = 'username'
-
     def create_lazy_user(self):
         """ Create a lazy user. Returns a 2-tuple of the underlying User
         object (which may be of a custom class), and the username.
         """
-        user_class = self.model.get_user_class()
-        username = self.generate_username(user_class)
-        user = user_class.objects.create_user(username, '')
+        UserModel = get_user_model()
+        username = self.generate_username(UserModel)
+        user = UserModel.objects.create_user(**{UserModel.USERNAME_FIELD: username})
         self.create(user=user)
         return user, username
 
@@ -47,36 +46,34 @@ class LazyUserManager(models.Manager):
 
         The converted ``User`` object is returned.
 
-        Raises a TypeError if the user is not lazy.
+        Raises a NotLazyError if the user is not lazy.
         """
         if not is_lazy_user(form.instance):
             raise NotLazyError('You cannot convert a non-lazy user')
 
         user = form.save()
 
-        # We need to remove the LazyUser instance assocated with the
+        # We need to remove the LazyUser instance associated with the
         # newly-converted user
         self.filter(user=user).delete()
 
         converted.send(self, user=user)
         return user
 
-    def generate_username(self, user_class):
+    def generate_username(self, UserModel):
         """ Generate a new username for a user
         """
-        m = getattr(user_class, 'generate_username', None)
+        m = getattr(UserModel, 'generate_username', None)
         if m:
             return m()
         else:
-            max_length = user_class._meta.get_field(
-                self.username_field).max_length
+            max_length = UserModel._meta.get_field(
+                UserModel.USERNAME_FIELD).max_length
             return uuid.uuid4().hex[:max_length]
 
 
 class LazyUser(models.Model):
-    user = models.ForeignKey(
-        getattr(settings, 'LAZYSIGNUP_USER_MODEL', 'auth.User'),
-        unique=True)
+    user = models.OneToOneField(settings.AUTH_USER_MODEL)
     created = models.DateTimeField(default=now, db_index=True)
     objects = LazyUserManager()
 

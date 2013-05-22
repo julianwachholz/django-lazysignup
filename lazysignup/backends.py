@@ -1,25 +1,28 @@
+from django.contrib.auth import get_user_model
 from django.contrib.auth.backends import ModelBackend
-from lazysignup.models import LazyUser
 
 
 class LazySignupBackend(ModelBackend):
 
     def authenticate(self, username=None):
-        user_class = LazyUser.get_user_class()
+        """This method will always authenticate the given user."""
+
+        UserModel = get_user_model()
+        if username is None:
+            username = kwargs.get(UserModel.USERNAME_FIELD)
         try:
-            return user_class.objects.get(username=username)
+            return UserModel._default_manager.get_by_natural_key(username)
         except user_class.DoesNotExist:
             return None
 
     def get_user(self, user_id):
-        # Annotate the user with our backend so it's always available,
-        # not just when authenticate() has been called. This will be
-        # used by the is_lazy_user filter.
-        user_class = LazyUser.get_user_class()
-        try:
-            user = user_class.objects.get(pk=user_id)
-        except user_class.DoesNotExist:
-            user = None
-        else:
+        """Annotate the user with our backend.
+
+        This way the backend is always available, not just when authenticate()
+        has been called. This will be used by the is_lazy_user filter.
+
+        """
+        user = super(LazySignupBackend, self).get_user(user_id)
+        if user is not None:
             user.backend = 'lazysignup.backends.LazySignupBackend'
         return user
