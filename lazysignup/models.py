@@ -1,7 +1,6 @@
 import re
 import uuid
 from django.conf import settings
-from django.contrib.auth import get_user_model
 from django.db import models
 try:
     from django.utils.timezone import now
@@ -32,10 +31,14 @@ class LazyUserManager(models.Manager):
     def create_lazy_user(self):
         """ Create a lazy user. Returns a 2-tuple of the underlying User
         object (which may be of a custom class), and the username.
+
+        You should overwrite this method if you are using a custom
+        user manager (for example with a custom user model).
+
         """
-        UserModel = get_user_model()
+        UserModel = LazyUser.get_user_class()
         username = self.generate_username(UserModel)
-        user = UserModel.objects.create_user(**{UserModel.USERNAME_FIELD: username})
+        user = UserModel.objects.create_user(username)
         self.create(user=user)
         return user, username
 
@@ -73,7 +76,7 @@ class LazyUserManager(models.Manager):
 
 
 class LazyUser(models.Model):
-    user = models.OneToOneField(settings.AUTH_USER_MODEL)
+    user = models.OneToOneField(getattr(settings, 'LAZYSIGNUP_USER_MODEL', 'auth.User'))
     created = models.DateTimeField(default=now, db_index=True)
     objects = LazyUserManager()
 

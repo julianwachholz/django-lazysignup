@@ -1,5 +1,6 @@
-from django.contrib.auth import get_user_model
 from django.contrib.auth.backends import ModelBackend
+
+from lazysignup.models import LazyUser
 
 
 class LazySignupBackend(ModelBackend):
@@ -7,12 +8,15 @@ class LazySignupBackend(ModelBackend):
     def authenticate(self, username=None):
         """This method will always authenticate the given user."""
 
-        UserModel = get_user_model()
-        if username is None:
-            username = kwargs.get(UserModel.USERNAME_FIELD)
+        UserModel = LazyUser.get_user_class()
+        #if username is None:
+        #    username_field = getattr(UserModel, 'USERNAME_FIELD', 'username')
+        #    username = kwargs.get(username_field)
         try:
-            return UserModel._default_manager.get_by_natural_key(username)
-        except user_class.DoesNotExist:
+            return UserModel.objects.get(username=username)
+            #if callable(UserModel._default_manager.get_by_natural_key):
+            #    return UserModel._default_manager.get_by_natural_key(username)
+        except UserModel.DoesNotExist:
             return None
 
     def get_user(self, user_id):
@@ -22,7 +26,11 @@ class LazySignupBackend(ModelBackend):
         has been called. This will be used by the is_lazy_user filter.
 
         """
-        user = super(LazySignupBackend, self).get_user(user_id)
-        if user is not None:
+        UserModel = LazyUser.get_user_class()
+        try:
+            user = UserModel.objects.get(pk=user_id)
+        except UserModel.DoesNotExist:
+            user = None
+        else:
             user.backend = 'lazysignup.backends.LazySignupBackend'
         return user

@@ -9,12 +9,10 @@ from django.db import models
 from django.http import HttpRequest, HttpResponse
 from django.contrib.auth import SESSION_KEY, BACKEND_SESSION_KEY
 from django.contrib.auth import authenticate
-from django.contrib.auth import get_user
+from django.contrib.auth import get_user_model, get_user
 from django.contrib.auth import login
 from django.contrib.auth.forms import UserCreationForm
-from django.contrib.auth.models import AnonymousUser
-from django.contrib.auth.models import User
-from django.contrib.auth.models import UserManager
+from django.contrib.auth.models import AnonymousUser, AbstractUser, UserManager
 from django.contrib.sessions.middleware import SessionMiddleware
 from django.test import TestCase
 from django.views.decorators.http import require_POST
@@ -99,10 +97,12 @@ def no_lazysignup(func):
     return wraps(func)(wrapped)
 
 
-class CustomUser(User):
+class CustomUser(AbstractUser):
     objects = UserManager()
     my_custom_field = models.CharField(max_length=50, blank=True, null=True)
     custom_username = models.CharField(max_length=35)
+
+User = LazyUser.get_user_class()
 
 
 class LazyTestCase(TestCase):
