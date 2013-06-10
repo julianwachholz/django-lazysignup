@@ -3,11 +3,9 @@
 import datetime
 from south.db import db
 from south.v2 import SchemaMigration
-from django.conf import settings
 from django.db import models
 
-
-USER_MODEL = getattr(settings, 'AUTH_USER_MODEL', 'auth.User')
+from .helper import *
 
 
 class Migration(SchemaMigration):
@@ -34,6 +32,7 @@ class Migration(SchemaMigration):
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'user': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm[USER_MODEL]", 'unique': 'True'})
         },
+        USER_MODEL: USER_MODEL_DICT,
     }
 
     complete_apps = ['lazysignup']
