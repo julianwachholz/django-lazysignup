@@ -5,17 +5,21 @@ from lazysignup.models import LazyUser
 
 class LazySignupBackend(ModelBackend):
 
-    def authenticate(self, username=None):
+    def authenticate(self, username=None, **kwargs):
         """This method will always authenticate the given user."""
 
+        # Lazy users must not have a password
+        if kwargs.get('password') is not None:
+            return None
+
         UserModel = LazyUser.get_user_class()
-        #if username is None:
-        #    username_field = getattr(UserModel, 'USERNAME_FIELD', 'username')
-        #    username = kwargs.get(username_field)
+        if username is None:
+            username_field = getattr(UserModel, 'USERNAME_FIELD', 'username')
+            username = kwargs.get(username_field)
         try:
+            if callable(UserModel._default_manager.get_by_natural_key):
+                return UserModel._default_manager.get_by_natural_key(username)
             return UserModel.objects.get(username=username)
-            #if callable(UserModel._default_manager.get_by_natural_key):
-            #    return UserModel._default_manager.get_by_natural_key(username)
         except UserModel.DoesNotExist:
             return None
 
