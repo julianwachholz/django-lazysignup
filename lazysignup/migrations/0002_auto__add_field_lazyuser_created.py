@@ -26,7 +26,7 @@ class Migration(SchemaMigration):
             'Meta': {'object_name': 'LazyUser'},
             'created': ('django.db.models.fields.DateTimeField', [], {'default': 'datetime.datetime.now'}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'user': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm[USER_MODEL]", 'unique': 'True'})
+            'user': ('django.db.models.fields.related.ForeignKey', [], {'to': 'orm["'+USER_MODEL+'"]', 'unique': 'True'})
         },
         USER_MODEL: USER_MODEL_DICT,
     }

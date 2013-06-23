@@ -30,7 +30,7 @@ class Migration(SchemaMigration):
         'lazysignup.lazyuser': {
             'Meta': {'object_name': 'LazyUser'},
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'user': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm[USER_MODEL]", 'unique': 'True'})
+            'user': ('django.db.models.fields.related.ForeignKey', [], {'to': 'orm["'+USER_MODEL+'"]', 'unique': 'True'})
         },
         USER_MODEL: USER_MODEL_DICT,
     }
